@@ -40,8 +40,8 @@ export AWS_SECRET_ACCESS_KEY="${STS[1]}"
 export AWS_SESSION_TOKEN="${STS[2]}"
 
 # Sync bucket
-VITE_FOLDER="$BUILD_DIR/public/vite"
-aws s3 sync $VITE_FOLDER s3://$S3_BUCKET_NAME
+PUBLIC_FOLDER="$BUILD_DIR/public"
+aws s3 sync $PUBLIC_FOLDER s3://$S3_BUCKET_NAME
 
 # Invalidate cache
 # We need to invalidate the cache for manifest.json and manifest-assets.json
