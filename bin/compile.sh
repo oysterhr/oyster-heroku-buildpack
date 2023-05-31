@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# `set –e` is used within the Bash to stop execution instantly as a query exits while having a non-zero status. 
+# This function is also used when you need to know the error location in the running code
+set -e
+
 BUILD_DIR=$1
 ENV_DIR=$3
 
