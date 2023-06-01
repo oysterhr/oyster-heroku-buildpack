@@ -51,8 +51,8 @@ if [ -z "$ENV_HEROKU_APP_NAME" ]; then
   exit 0
 fi
 
-if [ -z "$ENV_RELEASE_VERSION" ]; then
-  echo "Skipping AWS sync. RELEASE_VERSION is not set"
+if [ -z "$ENV_HEROKU_RELEASE_VERSION" ]; then
+  echo "Skipping AWS sync. HEROKU_RELEASE_VERSION is not set"
   exit 0
 fi
 
@@ -75,4 +75,4 @@ aws s3 sync $PUBLIC_FOLDER s3://$ENV_S3_BUCKET_NAME
 # Invalidate cache
 # We need to invalidate the cache for manifest.json and manifest-assets.json
 # So users get the last hash versioning
-# aws cloudfront create-invalidation --distribution-id $HEROKU_RELEASE_VERSION --paths "/manifest.json" "/manifest-assets.json" --no-cli-pager
+# aws cloudfront create-invalidation --distribution-id $ENV_HEROKU_RELEASE_VERSION --paths "/manifest.json" "/manifest-assets.json" --no-cli-pager
