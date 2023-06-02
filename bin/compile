@@ -10,10 +10,26 @@ ENV_DIR=$3
 # Get env variables
 ENV_ROLE_ARN=$(test -f "$ENV_DIR/ROLE_ARN" && cat "$ENV_DIR/ROLE_ARN" || echo "")
 ENV_S3_BUCKET_NAME=$(test -f "$ENV_DIR/S3_BUCKET_NAME" && cat "$ENV_DIR/S3_BUCKET_NAME" || echo "")
+ENV_DISTRIBUTION_ID=$(test -f "$ENV_DIR/DISTRIBUTION_ID" && cat "$ENV_DIR/DISTRIBUTION_ID" || echo "")
 ENV_AWS_ACCESS_KEY_ID=$(test -f "$ENV_DIR/AWS_ACCESS_KEY_ID" && cat "$ENV_DIR/AWS_ACCESS_KEY_ID" || echo "")
 ENV_AWS_SECRET_ACCESS_KEY=$(test -f "$ENV_DIR/AWS_SECRET_ACCESS_KEY" && cat "$ENV_DIR/AWS_SECRET_ACCESS_KEY" || echo "")
 ENV_HEROKU_APP_NAME=$(test -f "$ENV_DIR/HEROKU_APP_NAME" && cat "$ENV_DIR/HEROKU_APP_NAME" || echo "")
 ENV_HEROKU_RELEASE_VERSION=$(test -f "$ENV_DIR/HEROKU_RELEASE_VERSION" && cat "$ENV_DIR/HEROKU_RELEASE_VERSION" || date +%s )
+
+if [ -z "$ENV_ROLE_ARN" ]; then
+  echo "-----> ⏭️  Skipping AWS sync. ROLE_ARN is not set"
+  exit 0
+fi
+
+if [ -z "$ENV_S3_BUCKET_NAME" ]; then
+  echo "-----> ⏭️  Skipping AWS sync. S3_BUCKET_NAME is not set"
+  exit 0
+fi
+
+if [ -z "$ENV_DISTRIBUTION_ID" ]; then
+  echo "-----> ⏭️  Skipping AWS sync. DISTRIBUTION_ID is not set"
+  exit 0
+fi
 
 if [ -z "$ENV_AWS_ACCESS_KEY_ID" ]; then
   echo "-----> ⏭️  Skipping AWS sync. AWS_ACCESS_KEY_ID is not set"
@@ -24,23 +40,6 @@ if [ -z "$ENV_AWS_SECRET_ACCESS_KEY" ]; then
   echo "-----> ⏭️  Skipping AWS sync. AWS_SECRET_ACCESS_KEY is not set"
   exit 0
 fi
-
-if [ -z "$ENV_ROLE_ARN" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. ROLE_ARN is not set"
-  exit 0
-fi
-
-
-if [ -z "$ENV_S3_BUCKET_NAME" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. S3_BUCKET_NAME is not set"
-  exit 0
-fi
-
-if [ -z "$ENV_ROLE_ARN" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. ROLE_ARN is not set"
-  exit 0
-fi
-
 
 if [ -z "$ENV_HEROKU_APP_NAME" ]; then
   echo "-----> ⏭️  Skipping AWS sync. HEROKU_APP_NAME is not set"
@@ -98,6 +97,6 @@ echo "-----> ⌛️  Invalidating cache"
 # Invalidate cache
 # We need to invalidate the cache for manifest.json and manifest-assets.json
 # So users get the last hash versioning
-aws cloudfront create-invalidation --distribution-id $ENV_HEROKU_RELEASE_VERSION --paths "/manifest.json" "/manifest-assets.json" --no-cli-pager
+aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "/manifest.json" "/manifest-assets.json" --no-cli-pager
 
 echo "-----> ✅  Invalidated cache successfully"
