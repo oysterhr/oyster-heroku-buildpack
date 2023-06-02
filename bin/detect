@@ -1,3 +1,3 @@
 #!/bin/sh
-echo "Oyster buildpack"
+echo "-----> 🦪  Oyster buildpack  💻"
 exit 0
