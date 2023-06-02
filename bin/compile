@@ -65,7 +65,7 @@ echo "-----> ✅  Env variables set successfully"
 echo "-----> ⌛️  Assuming role"
 
 # Assume role
-STS=($(aws sts assume-role --quiet --role-arn ${ENV_ROLE_ARN} --role-session-name "${ENV_HEROKU_APP_NAME}-${ENV_HEROKU_RELEASE_VERSION}" --duration-seconds 3600 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text))
+STS=($(aws sts assume-role --role-arn ${ENV_ROLE_ARN} --role-session-name "${ENV_HEROKU_APP_NAME}-${ENV_HEROKU_RELEASE_VERSION}" --duration-seconds 3600 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text))
 
 echo "-----> ✅  Role assumed successfully"
 
@@ -88,7 +88,7 @@ echo "-----> ⌛️  Syncing bucket"
 
 # Sync bucket
 PUBLIC_FOLDER="$BUILD_DIR/public"
-aws s3 sync $PUBLIC_FOLDER s3://$ENV_S3_BUCKET_NAME
+aws s3 sync $PUBLIC_FOLDER s3://$ENV_S3_BUCKET_NAME --quiet
 
 echo "-----> ✅  Synced bucket successfully"
 
