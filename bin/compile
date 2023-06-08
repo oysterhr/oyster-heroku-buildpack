@@ -7,10 +7,6 @@ set -e
 BUILD_DIR=$1
 ENV_DIR=$3
 
-ls -la $ENV_DIR
-
-echo $SOURCE_VERSION
-
 # Get env variables
 ENV_ROLE_ARN=$(test -f "$ENV_DIR/ROLE_ARN" && cat "$ENV_DIR/ROLE_ARN" || echo "")
 ENV_S3_BUCKET_NAME=$(test -f "$ENV_DIR/S3_BUCKET_NAME" && cat "$ENV_DIR/S3_BUCKET_NAME" || echo "")
@@ -56,51 +52,51 @@ if [ -z "$ENV_HEROKU_RELEASE_VERSION" ]; then
 fi
 
 
-# echo "-----> ⌛️  Setting env variables"
+echo "-----> ⌛️  Setting env variables"
 
-# # Set env variables for aws cli
-# export AWS_ACCESS_KEY_ID="$ENV_AWS_ACCESS_KEY_ID"
-# export AWS_SECRET_ACCESS_KEY="$ENV_AWS_SECRET_ACCESS_KEY"
+# Set env variables for aws cli
+export AWS_ACCESS_KEY_ID="$ENV_AWS_ACCESS_KEY_ID"
+export AWS_SECRET_ACCESS_KEY="$ENV_AWS_SECRET_ACCESS_KEY"
 
-# echo "-----> ✅  Env variables set successfully"
-
-
-# echo "-----> ⌛️  Assuming role"
-
-# # Assume role
-# STS=($(aws sts assume-role --role-arn ${ENV_ROLE_ARN} --role-session-name "${ENV_HEROKU_APP_NAME}-${ENV_HEROKU_RELEASE_VERSION}" --duration-seconds 3600 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text))
-
-# echo "-----> ✅  Role assumed successfully"
+echo "-----> ✅  Env variables set successfully"
 
 
-# echo "-----> ⌛️  Setting new temporary env variables from assumed role"
+echo "-----> ⌛️  Assuming role"
 
-# # Unset env variables for aws cli
-# unset AWS_SECRET_ACCESS_KEY
-# unset AWS_ACCESS_KEY_ID
+# Assume role
+STS=($(aws sts assume-role --role-arn ${ENV_ROLE_ARN} --role-session-name "${ENV_HEROKU_APP_NAME}-${ENV_HEROKU_RELEASE_VERSION}" --duration-seconds 3600 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text))
 
-# # Set new temporary env variables for aws cli with permissions from assumed role
-# export AWS_ACCESS_KEY_ID="${STS[0]}"
-# export AWS_SECRET_ACCESS_KEY="${STS[1]}"
-# export AWS_SESSION_TOKEN="${STS[2]}"
-
-# echo "-----> ✅  New temp env variables set successfully"
+echo "-----> ✅  Role assumed successfully"
 
 
-# echo "-----> ⌛️  Syncing bucket"
+echo "-----> ⌛️  Setting new temporary env variables from assumed role"
 
-# # Sync bucket
-# PUBLIC_FOLDER="$BUILD_DIR/public"
-# aws s3 sync $PUBLIC_FOLDER s3://$ENV_S3_BUCKET_NAME --quiet
+# Unset env variables for aws cli
+unset AWS_SECRET_ACCESS_KEY
+unset AWS_ACCESS_KEY_ID
 
-# echo "-----> ✅  Synced bucket successfully"
+# Set new temporary env variables for aws cli with permissions from assumed role
+export AWS_ACCESS_KEY_ID="${STS[0]}"
+export AWS_SECRET_ACCESS_KEY="${STS[1]}"
+export AWS_SESSION_TOKEN="${STS[2]}"
+
+echo "-----> ✅  New temp env variables set successfully"
 
 
-# echo "-----> ⌛️  Invalidating cache"
+echo "-----> ⌛️  Syncing bucket"
 
-# # Invalidate cache
-# # We need to invalidate the cache for manifest.json and manifest-assets.json
-# # So users get the last hash versioning
-# aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "/vite/manifest.json" "/vite/manifest-assets.json" --no-cli-pager
+# Sync bucket
+PUBLIC_FOLDER="$BUILD_DIR/public"
+aws s3 sync $PUBLIC_FOLDER s3://$ENV_S3_BUCKET_NAME/$SOURCE_VERSION --quiet
 
-# echo "-----> ✅  Invalidated cache successfully"
+echo "-----> ✅  Synced bucket successfully"
+
+
+echo "-----> ⌛️  Invalidating cache"
+
+# Invalidate cache
+# We need to invalidate the cache for manifest.json and manifest-assets.json
+# So users get the last hash versioning
+aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "$SOURCE_VERSION/vite/manifest.json" "$SOURCE_VERSION/vite/manifest-assets.json" --no-cli-pager
+
+echo "-----> ✅  Invalidated cache successfully"
