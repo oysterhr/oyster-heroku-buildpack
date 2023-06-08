@@ -97,6 +97,6 @@ echo "-----> ⌛️  Invalidating cache"
 # Invalidate cache
 # We need to invalidate the cache for manifest.json and manifest-assets.json
 # So users get the last hash versioning
-aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "$SOURCE_VERSION/vite/manifest.json" "$SOURCE_VERSION/vite/manifest-assets.json" --no-cli-pager
+aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "/$SOURCE_VERSION/vite/manifest.json" "/$SOURCE_VERSION/vite/manifest-assets.json" --no-cli-pager
 
 echo "-----> ✅  Invalidated cache successfully"
