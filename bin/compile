@@ -19,7 +19,14 @@ ENV_HEROKU_RELEASE_VERSION=$(test -f "$ENV_DIR/HEROKU_RELEASE_VERSION" && cat "$
 echo "HEROKU_RELEASE_VERSION"
 echo "$ENV_HEROKU_RELEASE_VERSION"
 
-cat "$ENV_DIR"/*
+
+for entry in "$ENV_DIR"/*
+do
+  echo "$entry"
+  cat "$entry"
+  echo "----"
+  echo "----"
+done
 
 # if [ -z "$ENV_ROLE_ARN" ]; then
 #   echo "-----> ⏭️  Skipping AWS sync. ROLE_ARN is not set"
