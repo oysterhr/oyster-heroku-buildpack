@@ -51,6 +51,15 @@ if [ -z "$ENV_HEROKU_RELEASE_VERSION" ]; then
   exit 0
 fi
 
+echo "-----> ⌛️  Creating .profile.d/set_cdn_namespace.sh to export CDN_NAMESPACE"
+
+mkdir -p "${BUILD_DIR}/.profile.d"
+cat > "${BUILD_DIR}/.profile.d/set_cdn_namespace.sh" <<'PROFILE'
+export CDN_NAMESPACE="${SOURCE_VERSION}"
+PROFILE
+
+echo "-----> ✅  Created .profile.d/set_cdn_namespace.sh successfully"
+
 
 echo "-----> ⌛️  Setting env variables"
 
