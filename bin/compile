@@ -51,6 +51,12 @@ if [ -z "$ENV_HEROKU_RELEASE_VERSION" ]; then
   exit 0
 fi
 
+echo "-----> ⌛️  Building apps..."
+
+exec yarn build:apps
+
+echo "-----> ✅  Apps built successfully"
+
 
 echo "-----> ⌛️  Setting env variables"
 
