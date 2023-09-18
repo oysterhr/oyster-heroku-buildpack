@@ -5,10 +5,14 @@
 set -e
 
 BUILD_DIR=$1
+CACHE_DIR=$2
 ENV_DIR=$3
-
 ROOT_DIR=$(pwd)
 
+cd $CACHE_DIR
+ls
+
+cd $ROOT_DIR
 echo "-----> ⌛️  Building apps..."
 
 cd $BUILD_DIR
