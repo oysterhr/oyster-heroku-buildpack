@@ -9,18 +9,11 @@ CACHE_DIR=$2
 ENV_DIR=$3
 ROOT_DIR=$(pwd)
 
-cd $CACHE_DIR
-ls
-cd $ROOT_DIR
 
 echo "-----> ⌛️  Building apps..."
 
-echo $CACHE_DIR
-
-mkdir -p "$(dirname "$BUILD_DIR/node_modules")"
-mv "$CACHE_DIR/node/cache/node_modules" "$BUILD_DIR/node_modules"
-
 cd $BUILD_DIR
+exec yarn install --frozen-lockfile
 exec yarn build:apps
 cd $ROOT_DIR
 
