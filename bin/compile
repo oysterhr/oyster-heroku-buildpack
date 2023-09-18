@@ -7,6 +7,12 @@ set -e
 BUILD_DIR=$1
 ENV_DIR=$3
 
+echo "-----> ⌛️  Building apps..."
+
+exec yarn build:apps
+
+echo "-----> ✅  Apps built successfully"
+
 # Get env variables
 ENV_ROLE_ARN=$(test -f "$ENV_DIR/ROLE_ARN" && cat "$ENV_DIR/ROLE_ARN" || echo "")
 ENV_S3_BUCKET_NAME=$(test -f "$ENV_DIR/S3_BUCKET_NAME" && cat "$ENV_DIR/S3_BUCKET_NAME" || echo "")
@@ -50,12 +56,6 @@ if [ -z "$ENV_HEROKU_RELEASE_VERSION" ]; then
   echo "-----> ⏭️  Skipping AWS sync. HEROKU_RELEASE_VERSION is not set"
   exit 0
 fi
-
-echo "-----> ⌛️  Building apps..."
-
-exec yarn build:apps
-
-echo "-----> ✅  Apps built successfully"
 
 
 echo "-----> ⌛️  Setting env variables"
