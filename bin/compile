@@ -11,9 +11,14 @@ ROOT_DIR=$(pwd)
 
 cd $CACHE_DIR
 ls
-
 cd $ROOT_DIR
+
 echo "-----> ⌛️  Building apps..."
+
+echo $CACHE_DIR
+
+mkdir -p "$(dirname "$BUILD_DIR/node_modules")"
+mv "$CACHE_DIR/node/cache/node_modules" "$BUILD_DIR/node_modules"
 
 cd $BUILD_DIR
 exec yarn build:apps
@@ -114,6 +119,3 @@ echo "-----> ⌛️  Invalidating cache"
 aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "/vite/manifest.json" "/vite/manifest-assets.json" --no-cli-pager
 
 echo "-----> ✅  Invalidated cache successfully"
-
-
-https://github.com/oysterhr/oyster-heroku-buildpack.git#Tur-19425/update-oysterherokubuildpack-to-run-yarn-buildapps-before-uploadi
