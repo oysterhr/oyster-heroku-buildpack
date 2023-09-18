@@ -12,7 +12,8 @@ ROOT_DIR=$(pwd)
 
 echo "-----> ⌛️  Building apps..."
 
-echo "$ENV_DIR/SKIP_NODE_MODULES_CHECK"
+ENV_SKIP_NODE_MODULES_CHECK=$(test -f "$ENV_DIR/SKIP_NODE_MODULES_CHECK" && cat "$ENV_DIR/SKIP_NODE_MODULES_CHECK" || echo "")
+echo "SKIP_NODE_MODULES_CHECK=$ENV_SKIP_NODE_MODULES_CHECK"
 
 cd $BUILD_DIR
 exec yarn build:apps
