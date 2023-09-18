@@ -7,9 +7,13 @@ set -e
 BUILD_DIR=$1
 ENV_DIR=$3
 
+ROOT_DIR=$(pwd)
+
 echo "-----> ⌛️  Building apps..."
 
+cd $BUILD_DIR
 exec yarn build:apps
+cd $ROOT_DIR
 
 echo "-----> ✅  Apps built successfully"
 
@@ -106,3 +110,6 @@ echo "-----> ⌛️  Invalidating cache"
 aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "/vite/manifest.json" "/vite/manifest-assets.json" --no-cli-pager
 
 echo "-----> ✅  Invalidated cache successfully"
+
+
+https://github.com/oysterhr/oyster-heroku-buildpack.git#Tur-19425/update-oysterherokubuildpack-to-run-yarn-buildapps-before-uploadi
