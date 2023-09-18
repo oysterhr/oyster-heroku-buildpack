@@ -13,7 +13,6 @@ ROOT_DIR=$(pwd)
 echo "-----> ⌛️  Building apps..."
 
 cd $BUILD_DIR
-exec yarn install --frozen-lockfile
 exec yarn build:apps
 cd $ROOT_DIR
 
