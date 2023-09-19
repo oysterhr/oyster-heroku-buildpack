@@ -10,18 +10,6 @@ ENV_DIR=$3
 ROOT_DIR=$(pwd)
 
 
-echo "-----> ⌛️  Building apps..."
-
-ENV_SKIP_NODE_MODULES_CHECK=$(test -f "$ENV_DIR/SKIP_NODE_MODULES_CHECK" && cat "$ENV_DIR/SKIP_NODE_MODULES_CHECK" || echo "")
-echo "SKIP_NODE_MODULES_CHECK=$ENV_SKIP_NODE_MODULES_CHECK"
-
-cd $BUILD_DIR
-yarn install --frozen-lockfile
-yarn build:apps
-cd $ROOT_DIR
-
-echo "-----> ✅  Apps built successfully"
-
 # Get env variables
 ENV_ROLE_ARN=$(test -f "$ENV_DIR/ROLE_ARN" && cat "$ENV_DIR/ROLE_ARN" || echo "")
 ENV_S3_BUCKET_NAME=$(test -f "$ENV_DIR/S3_BUCKET_NAME" && cat "$ENV_DIR/S3_BUCKET_NAME" || echo "")
@@ -115,3 +103,9 @@ echo "-----> ⌛️  Invalidating cache"
 aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "/vite/manifest.json" "/vite/manifest-assets.json" --no-cli-pager
 
 echo "-----> ✅  Invalidated cache successfully"
+
+echo "-----> ⌛️  Prune FE source code"
+
+rm -rf "$BUILD_DIR/frontend" "$BUILD_DIR/packages" "$BUILD_DIR/app/javascript"
+
+echo "-----> ✅  Prune FE source code successfully"
