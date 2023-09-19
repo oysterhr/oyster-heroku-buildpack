@@ -114,6 +114,6 @@ echo "-----> ⌛️  Cleaning up slug"
 
 cd $BUILD_DIR
 yarn clean
-rm -rf frontend packages app/javascript /app/.awscli
+rm -rf frontend packages app/javascript .awscli
 
 echo "-----> ✅  Cleaning up slug successfully"
