@@ -83,10 +83,3 @@ else
   [ -z "$ENV_HEROKU_RELEASE_VERSION" ] && echo "HEROKU_RELEASE_VERSION is not set"
 fi
 
-echo "-----> ⌛️  Cleaning up slug"
-
-cd "$BUILD_DIR"
-yarn clean
-rm -rf frontend packages app/javascript .awscli
-
-echo "-----> ✅  Cleaning up slug successfully"
