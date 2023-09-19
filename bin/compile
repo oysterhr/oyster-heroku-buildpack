@@ -9,6 +9,13 @@ CACHE_DIR=$2
 ENV_DIR=$3
 ROOT_DIR=$(pwd)
 
+echo "-----> ⌛️  Building frontend"
+
+cd $BUILD_DIR
+yarn build:apps
+cd $ROOT_DIR
+
+echo "-----> ✅  Frontend built successfully"
 
 # Get env variables
 ENV_ROLE_ARN=$(test -f "$ENV_DIR/ROLE_ARN" && cat "$ENV_DIR/ROLE_ARN" || echo "")
@@ -104,8 +111,9 @@ aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --path
 
 echo "-----> ✅  Invalidated cache successfully"
 
-echo "-----> ⌛️  Prune FE source code"
+echo "-----> ⌛️  Cleaning up slug"
 
-rm -rf "$BUILD_DIR/frontend" "$BUILD_DIR/packages" "$BUILD_DIR/app/javascript"
+yarn clean
+rm -rf "$BUILD_DIR/frontend" "$BUILD_DIR/packages" "$BUILD_DIR/app/javascript" "/app/.awscli"
 
-echo "-----> ✅  Prune FE source code successfully"
+echo "-----> ✅  Cleaning up slug successfully"
