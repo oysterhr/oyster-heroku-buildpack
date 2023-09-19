@@ -16,7 +16,8 @@ ENV_SKIP_NODE_MODULES_CHECK=$(test -f "$ENV_DIR/SKIP_NODE_MODULES_CHECK" && cat 
 echo "SKIP_NODE_MODULES_CHECK=$ENV_SKIP_NODE_MODULES_CHECK"
 
 cd $BUILD_DIR
-exec yarn build:apps
+yarn install --frozen-lockfile
+yarn build:apps
 cd $ROOT_DIR
 
 echo "-----> ✅  Apps built successfully"
