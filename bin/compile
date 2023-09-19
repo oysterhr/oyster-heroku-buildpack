@@ -31,8 +31,8 @@ if [ -n "$ENV_ROLE_ARN" ] && [ -n "$ENV_S3_BUCKET_NAME" ] && [ -n "$ENV_DISTRIBU
    [ -n "$ENV_HEROKU_APP_NAME" ] && [ -n "$ENV_HEROKU_RELEASE_VERSION" ]; then
   echo "-----> ⌛️  Setting env variables"
   # Set env variables for aws cli
-  AWS_ACCESS_KEY_ID="$ENV_AWS_ACCESS_KEY_ID"
-  AWS_SECRET_ACCESS_KEY="$ENV_AWS_SECRET_ACCESS_KEY"
+  export AWS_ACCESS_KEY_ID="$ENV_AWS_ACCESS_KEY_ID"
+  export AWS_SECRET_ACCESS_KEY="$ENV_AWS_SECRET_ACCESS_KEY"
 
   echo "-----> ✅  Env variables set successfully"
 
@@ -44,11 +44,15 @@ if [ -n "$ENV_ROLE_ARN" ] && [ -n "$ENV_S3_BUCKET_NAME" ] && [ -n "$ENV_DISTRIBU
   echo "-----> ✅  Role assumed successfully"
 
   echo "-----> ⌛️  Setting new temporary env variables from assumed role"
+  
+  # Unset env variables for aws cli
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_ACCESS_KEY_ID
 
   # Set new temporary env variables for aws cli with permissions from assumed role
-  AWS_ACCESS_KEY_ID="${STS[0]}"
-  AWS_SECRET_ACCESS_KEY="${STS[1]}"
-  AWS_SESSION_TOKEN="${STS[2]}"
+  export AWS_ACCESS_KEY_ID="${STS[0]}"
+  export AWS_SECRET_ACCESS_KEY="${STS[1]}"
+  export AWS_SESSION_TOKEN="${STS[2]}"
 
   echo "-----> ✅  New temp env variables set successfully"
 
