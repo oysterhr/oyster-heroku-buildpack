@@ -86,15 +86,11 @@ fi
 echo "-----> ⌛️  Cleaning up slug"
 
 rm -rf "$BUILD_DIR/node_modules" \
-  "$BUILD_DIR/plop" \
   "$BUILD_DIR/frontend" \
   "$BUILD_DIR/packages" \
   "$BUILD_DIR/app/javascript" \
   "$BUILD_DIR/.awscli" \
-  "$BUILD_DIR/.heroku/node" \
-  "$BUILD_DIR/.husky" \
-  "$BUILD_DIR/.turbo" \
-  "$BUILD_DIR/.vscode"
+  "$BUILD_DIR/.heroku/node"
 
 echo "-----> ✅  Cleaning up slug successfully"
 
