@@ -18,13 +18,15 @@ ENV_AWS_SECRET_ACCESS_KEY=$(cat "$ENV_DIR/AWS_SECRET_ACCESS_KEY" 2>/dev/null || 
 ENV_HEROKU_APP_NAME=$(cat "$ENV_DIR/HEROKU_APP_NAME" 2>/dev/null || true)
 ENV_HEROKU_RELEASE_VERSION=$(cat "$ENV_DIR/HEROKU_RELEASE_VERSION" 2>/dev/null || date +%s)
 
-echo "-----> ⌛️  Building frontend"
+if [ -f "$BUILD_DIR/node_modules/.bin/turbo" ]
+  echo "-----> ⌛️  Building frontend"
 
-cd "$BUILD_DIR"
-yarn build:apps
-cd "$ROOT_DIR"
+  cd "$BUILD_DIR"
+  yarn build:apps
+  cd "$ROOT_DIR"
 
-echo "-----> ✅  Frontend built successfully"
+  echo "-----> ✅  Frontend built successfully"
+fi
 
 if [ -n "$ENV_ROLE_ARN" ] && [ -n "$ENV_S3_BUCKET_NAME" ] && [ -n "$ENV_DISTRIBUTION_ID" ] && \
    [ -n "$ENV_AWS_ACCESS_KEY_ID" ] && [ -n "$ENV_AWS_SECRET_ACCESS_KEY" ] && \
