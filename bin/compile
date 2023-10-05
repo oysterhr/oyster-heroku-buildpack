@@ -1,102 +1,100 @@
 #!/bin/bash
 
-# `set –e` is used within the Bash to stop execution instantly as a query exits while having a non-zero status. 
+# `set –e` is used within Bash to stop execution instantly as a query exits with a non-zero status.
 # This function is also used when you need to know the error location in the running code
 set -e
 
 BUILD_DIR=$1
+CACHE_DIR=$2
 ENV_DIR=$3
+ROOT_DIR=$(pwd)
 
 # Get env variables
-ENV_ROLE_ARN=$(test -f "$ENV_DIR/ROLE_ARN" && cat "$ENV_DIR/ROLE_ARN" || echo "")
-ENV_S3_BUCKET_NAME=$(test -f "$ENV_DIR/S3_BUCKET_NAME" && cat "$ENV_DIR/S3_BUCKET_NAME" || echo "")
-ENV_DISTRIBUTION_ID=$(test -f "$ENV_DIR/DISTRIBUTION_ID" && cat "$ENV_DIR/DISTRIBUTION_ID" || echo "")
-ENV_AWS_ACCESS_KEY_ID=$(test -f "$ENV_DIR/AWS_ACCESS_KEY_ID" && cat "$ENV_DIR/AWS_ACCESS_KEY_ID" || echo "")
-ENV_AWS_SECRET_ACCESS_KEY=$(test -f "$ENV_DIR/AWS_SECRET_ACCESS_KEY" && cat "$ENV_DIR/AWS_SECRET_ACCESS_KEY" || echo "")
-ENV_HEROKU_APP_NAME=$(test -f "$ENV_DIR/HEROKU_APP_NAME" && cat "$ENV_DIR/HEROKU_APP_NAME" || echo "")
-ENV_HEROKU_RELEASE_VERSION=$(test -f "$ENV_DIR/HEROKU_RELEASE_VERSION" && cat "$ENV_DIR/HEROKU_RELEASE_VERSION" || date +%s )
+ENV_ROLE_ARN=$(cat "$ENV_DIR/ROLE_ARN" 2>/dev/null || true)
+ENV_S3_BUCKET_NAME=$(cat "$ENV_DIR/S3_BUCKET_NAME" 2>/dev/null || true)
+ENV_DISTRIBUTION_ID=$(cat "$ENV_DIR/DISTRIBUTION_ID" 2>/dev/null || true)
+ENV_AWS_ACCESS_KEY_ID=$(cat "$ENV_DIR/AWS_ACCESS_KEY_ID" 2>/dev/null || true)
+ENV_AWS_SECRET_ACCESS_KEY=$(cat "$ENV_DIR/AWS_SECRET_ACCESS_KEY" 2>/dev/null || true)
+ENV_HEROKU_APP_NAME=$(cat "$ENV_DIR/HEROKU_APP_NAME" 2>/dev/null || true)
+ENV_HEROKU_RELEASE_VERSION=$(cat "$ENV_DIR/HEROKU_RELEASE_VERSION" 2>/dev/null || date +%s)
 
-if [ -z "$ENV_ROLE_ARN" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. ROLE_ARN is not set"
-  exit 0
+if [ -f "$BUILD_DIR/node_modules/.bin/turbo" ]; then
+  echo "-----> ⌛️  Building frontend"
+
+  cd "$BUILD_DIR"
+  yarn build:apps
+  cd "$ROOT_DIR"
+
+  echo "-----> ✅  Frontend built successfully"
 fi
 
-if [ -z "$ENV_S3_BUCKET_NAME" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. S3_BUCKET_NAME is not set"
-  exit 0
+if [ -n "$ENV_ROLE_ARN" ] && [ -n "$ENV_S3_BUCKET_NAME" ] && [ -n "$ENV_DISTRIBUTION_ID" ] && \
+   [ -n "$ENV_AWS_ACCESS_KEY_ID" ] && [ -n "$ENV_AWS_SECRET_ACCESS_KEY" ] && \
+   [ -n "$ENV_HEROKU_APP_NAME" ] && [ -n "$ENV_HEROKU_RELEASE_VERSION" ]; then
+  echo "-----> ⌛️  Starting Cloudfront upload and invalidation process" 
+  echo "-----> ⌛️  Setting env variables"
+  # Set env variables for aws cli
+  export AWS_ACCESS_KEY_ID="$ENV_AWS_ACCESS_KEY_ID"
+  export AWS_SECRET_ACCESS_KEY="$ENV_AWS_SECRET_ACCESS_KEY"
+
+  echo "-----> ✅  Env variables set successfully"
+
+  echo "-----> ⌛️  Assuming role"
+
+  # Assume role
+  STS=($(aws sts assume-role --role-arn "${ENV_ROLE_ARN}" --role-session-name "${ENV_HEROKU_APP_NAME}-${ENV_HEROKU_RELEASE_VERSION}" --duration-seconds 3600 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text))
+
+  echo "-----> ✅  Role assumed successfully"
+
+  echo "-----> ⌛️  Setting new temporary env variables from assumed role"
+  
+  # Unset env variables for aws cli
+  unset AWS_SECRET_ACCESS_KEY
+  unset AWS_ACCESS_KEY_ID
+
+  # Set new temporary env variables for aws cli with permissions from assumed role
+  export AWS_ACCESS_KEY_ID="${STS[0]}"
+  export AWS_SECRET_ACCESS_KEY="${STS[1]}"
+  export AWS_SESSION_TOKEN="${STS[2]}"
+
+  echo "-----> ✅  New temp env variables set successfully"
+
+  echo "-----> ⌛️  Syncing bucket"
+
+  # Sync bucket
+  PUBLIC_FOLDER="$BUILD_DIR/public"
+  aws s3 sync "$PUBLIC_FOLDER" "s3://$ENV_S3_BUCKET_NAME" --quiet
+
+  echo "-----> ✅  Synced bucket successfully"
+
+  echo "-----> ⌛️  Invalidating cache"
+
+  # Invalidate cache
+  # We need to invalidate the cache for manifest.json and manifest-assets.json
+  # So users get the last hash versioning
+  aws cloudfront create-invalidation --distribution-id "$ENV_DISTRIBUTION_ID" --paths "/vite/*manifest.json" "/vite/*manifest-assets.json" --no-cli-pager
+
+  echo "-----> ✅  Invalidated cache successfully"
+else
+  echo "-----> ⏭️  Skipping AWS sync. Some required environment variables are not set:"
+  [ -z "$ENV_ROLE_ARN" ] && echo "ROLE_ARN is not set"
+  [ -z "$ENV_S3_BUCKET_NAME" ] && echo "S3_BUCKET_NAME is not set"
+  [ -z "$ENV_DISTRIBUTION_ID" ] && echo "DISTRIBUTION_ID is not set"
+  [ -z "$ENV_AWS_ACCESS_KEY_ID" ] && echo "AWS_ACCESS_KEY_ID is not set"
+  [ -z "$ENV_AWS_SECRET_ACCESS_KEY" ] && echo "AWS_SECRET_ACCESS_KEY is not set"
+  [ -z "$ENV_HEROKU_APP_NAME" ] && echo "HEROKU_APP_NAME is not set"
+  [ -z "$ENV_HEROKU_RELEASE_VERSION" ] && echo "HEROKU_RELEASE_VERSION is not set"
 fi
 
-if [ -z "$ENV_DISTRIBUTION_ID" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. DISTRIBUTION_ID is not set"
-  exit 0
-fi
+echo "-----> ⌛️  Cleaning up slug"
 
-if [ -z "$ENV_AWS_ACCESS_KEY_ID" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. AWS_ACCESS_KEY_ID is not set"
-  exit 0
-fi
+rm -rf "$BUILD_DIR/node_modules" \
+  "$BUILD_DIR/frontend" \
+  "$BUILD_DIR/packages" \
+  "$BUILD_DIR/app/javascript" \
+  "$BUILD_DIR/.awscli" \
+  "$BUILD_DIR/.heroku/node"
 
-if [ -z "$ENV_AWS_SECRET_ACCESS_KEY" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. AWS_SECRET_ACCESS_KEY is not set"
-  exit 0
-fi
-
-if [ -z "$ENV_HEROKU_APP_NAME" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. HEROKU_APP_NAME is not set"
-  exit 0
-fi
-
-if [ -z "$ENV_HEROKU_RELEASE_VERSION" ]; then
-  echo "-----> ⏭️  Skipping AWS sync. HEROKU_RELEASE_VERSION is not set"
-  exit 0
-fi
+echo "-----> ✅  Cleaning up slug successfully"
 
 
-echo "-----> ⌛️  Setting env variables"
-
-# Set env variables for aws cli
-export AWS_ACCESS_KEY_ID="$ENV_AWS_ACCESS_KEY_ID"
-export AWS_SECRET_ACCESS_KEY="$ENV_AWS_SECRET_ACCESS_KEY"
-
-echo "-----> ✅  Env variables set successfully"
-
-
-echo "-----> ⌛️  Assuming role"
-
-# Assume role
-STS=($(aws sts assume-role --role-arn ${ENV_ROLE_ARN} --role-session-name "${ENV_HEROKU_APP_NAME}-${ENV_HEROKU_RELEASE_VERSION}" --duration-seconds 3600 --query 'Credentials.[AccessKeyId,SecretAccessKey,SessionToken]' --output text))
-
-echo "-----> ✅  Role assumed successfully"
-
-
-echo "-----> ⌛️  Setting new temporary env variables from assumed role"
-
-# Unset env variables for aws cli
-unset AWS_SECRET_ACCESS_KEY
-unset AWS_ACCESS_KEY_ID
-
-# Set new temporary env variables for aws cli with permissions from assumed role
-export AWS_ACCESS_KEY_ID="${STS[0]}"
-export AWS_SECRET_ACCESS_KEY="${STS[1]}"
-export AWS_SESSION_TOKEN="${STS[2]}"
-
-echo "-----> ✅  New temp env variables set successfully"
-
-
-echo "-----> ⌛️  Syncing bucket"
-
-# Sync bucket
-PUBLIC_FOLDER="$BUILD_DIR/public"
-aws s3 sync $PUBLIC_FOLDER s3://$ENV_S3_BUCKET_NAME --quiet
-
-echo "-----> ✅  Synced bucket successfully"
-
-
-echo "-----> ⌛️  Invalidating cache"
-
-# Invalidate cache
-# We need to invalidate the cache for manifest.json and manifest-assets.json
-# So users get the last hash versioning
-aws cloudfront create-invalidation --distribution-id $ENV_DISTRIBUTION_ID --paths "/vite/manifest.json" "/vite/manifest-assets.json" --no-cli-pager
-
-echo "-----> ✅  Invalidated cache successfully"
