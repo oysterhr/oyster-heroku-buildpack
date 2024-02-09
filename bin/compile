@@ -22,7 +22,7 @@ if [ -f "$BUILD_DIR/node_modules/.bin/turbo" ]; then
   echo "-----> ⌛️  Building frontend"
 
   cd "$BUILD_DIR"
-  yarn build:apps
+  yarn build:apps:heroku
   cd "$ROOT_DIR"
 
   echo "-----> ✅  Frontend built successfully"
