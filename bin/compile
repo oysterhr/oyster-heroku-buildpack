@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # `set –e` is used within Bash to stop execution instantly as a query exits with a non-zero status.
 # This function is also used when you need to know the error location in the running code
